@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "@cms/config": ["packages/config/src"],
+      "@cms/database": ["packages/database/src"],
+      "@cms/logger": ["packages/logger/src"],
+      "@cms/errors": ["packages/errors/src"],
+      "@cms/security": ["packages/security/src"],
+      "@cms/validation": ["packages/validation/src"],
+      "@cms/messaging": ["packages/messaging/src"],
+      "@cms/cache": ["packages/cache/src"],
+      "@cms/auth": ["packages/auth/src"],
+      "@cms/utils": ["packages/utils/src"],
+      "@cms/plugin-sdk": ["packages/plugin-sdk/src"],
+      "@cms/observability": ["packages/observability/src"],
+      "@cms/rate-limit": ["packages/rate-limit/src"],
+      "@cms/search": ["packages/search/src"],
+      "@cms/workflow": ["packages/workflow/src"],
+      "@cms/feature-flags": ["packages/feature-flags/src"],
+      "@cms/api-client": ["packages/api-client/src"],
+      "@cms/encryption": ["packages/encryption/src"],
+      "@cms/query-firewall": ["packages/query-firewall/src"]
+    },
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "exclude": ["node_modules", "dist", "coverage"]
+}
