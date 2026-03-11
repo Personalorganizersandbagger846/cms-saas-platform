@@ -1,7 +1,25 @@
 # CMS SaaS Platform
 
+[![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A520-green?logo=node.js)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://react.dev/)
+[![Fastify](https://img.shields.io/badge/Fastify-4.x-black?logo=fastify)](https://www.fastify.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-red?logo=redis)](https://redis.io/)
+[![Elasticsearch](https://img.shields.io/badge/Elasticsearch-8.12-yellow?logo=elasticsearch)](https://www.elastic.co/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](https://www.docker.com/)
+[![Kubernetes](https://img.shields.io/badge/K8s-Ready-blue?logo=kubernetes)](https://kubernetes.io/)
+
 > Production-grade, multi-tenant Content Management System built as a microservices monorepo.  
 > Comparable to Contentful, Strapi, Ghost, Notion, and Shopify in scope.
+
+**🔥 Key Highlights:**
+- **15 Microservices** — Auth, Content, Media, Search, AI, Workflows, Plugins, and more
+- **React Admin Dashboard** — Block editor, drag-and-drop media library, analytics charts
+- **AI-Powered** — Content generation, improvement, translation, SEO analysis (GPT-4o-mini)
+- **Multi-Tenant** — Full tenant isolation with roles, permissions, and usage limits
+- **Production-Ready** — Docker Compose, Kubernetes manifests, CI/CD pipelines, observability
 
 ---
 
