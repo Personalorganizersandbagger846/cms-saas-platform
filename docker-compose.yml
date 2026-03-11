@@ -1,0 +1,403 @@
+version: '3.9'
+
+services:
+  # ─── Infrastructure ──────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cms
+      POSTGRES_USER: cms
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-cms_secret}
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cms']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+    ports:
+      - '9200:9200'
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -s http://localhost:9200/_cluster/health | grep -q green']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── Microservices ───────────────────────
+  api-gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: api-gateway
+    ports:
+      - '3000:3000'
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - USER_SERVICE_URL=http://user-service:3002
+      - TENANT_SERVICE_URL=http://tenant-service:3003
+      - CONTENT_SERVICE_URL=http://content-service:3004
+      - MEDIA_SERVICE_URL=http://media-service:3005
+      - COMMENT_SERVICE_URL=http://comment-service:3006
+      - ANALYTICS_SERVICE_URL=http://analytics-service:3007
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3008
+      - SEARCH_SERVICE_URL=http://search-service:3009
+      - WORKFLOW_SERVICE_URL=http://workflow-service:3010
+      - PLUGIN_SERVICE_URL=http://plugin-service:3011
+      - FEATURE_SERVICE_URL=http://feature-service:3012
+      - AUDIT_SERVICE_URL=http://audit-service:3013
+      - SETTINGS_SERVICE_URL=http://settings-service:3014
+      - AI_SERVICE_URL=http://ai-service:3015
+    depends_on:
+      auth-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: auth-service
+    ports:
+      - '3001:3001'
+    env_file: .env
+    environment:
+      - PORT=3001
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -sf http://localhost:3001/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: user-service
+    ports:
+      - '3002:3002'
+    env_file: .env
+    environment:
+      - PORT=3002
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  tenant-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: tenant-service
+    ports:
+      - '3003:3003'
+    env_file: .env
+    environment:
+      - PORT=3003
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  content-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: content-service
+    ports:
+      - '3004:3004'
+    env_file: .env
+    environment:
+      - PORT=3004
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  media-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: media-service
+    ports:
+      - '3005:3005'
+    env_file: .env
+    environment:
+      - PORT=3005
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  comment-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: comment-service
+    ports:
+      - '3006:3006'
+    env_file: .env
+    environment:
+      - PORT=3006
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: analytics-service
+    ports:
+      - '3007:3007'
+    env_file: .env
+    environment:
+      - PORT=3007
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: notification-service
+    ports:
+      - '3008:3008'
+    env_file: .env
+    environment:
+      - PORT=3008
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  search-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: search-service
+    ports:
+      - '3009:3009'
+    env_file: .env
+    environment:
+      - PORT=3009
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  workflow-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: workflow-service
+    ports:
+      - '3010:3010'
+    env_file: .env
+    environment:
+      - PORT=3010
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  plugin-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: plugin-service
+    ports:
+      - '3011:3011'
+    env_file: .env
+    environment:
+      - PORT=3011
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  feature-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: feature-service
+    ports:
+      - '3012:3012'
+    env_file: .env
+    environment:
+      - PORT=3012
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: audit-service
+    ports:
+      - '3013:3013'
+    env_file: .env
+    environment:
+      - PORT=3013
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  settings-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: settings-service
+    ports:
+      - '3014:3014'
+    env_file: .env
+    environment:
+      - PORT=3014
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        SERVICE_NAME: ai-service
+    ports:
+      - '3015:3015'
+    env_file: .env
+    environment:
+      - PORT=3015
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Frontend ────────────────────────────
+  admin:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    ports:
+      - '80:80'
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  esdata:

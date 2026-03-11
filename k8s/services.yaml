@@ -1,0 +1,1007 @@
+{{- $services := list
+  (dict "name" "api-gateway" "port" 3000)
+  (dict "name" "auth-service" "port" 3001)
+  (dict "name" "user-service" "port" 3002)
+  (dict "name" "tenant-service" "port" 3003)
+  (dict "name" "content-service" "port" 3004)
+  (dict "name" "media-service" "port" 3005)
+  (dict "name" "comment-service" "port" 3006)
+  (dict "name" "analytics-service" "port" 3007)
+  (dict "name" "notification-service" "port" 3008)
+  (dict "name" "search-service" "port" 3009)
+  (dict "name" "workflow-service" "port" 3010)
+  (dict "name" "plugin-service" "port" 3011)
+  (dict "name" "feature-service" "port" 3012)
+  (dict "name" "audit-service" "port" 3013)
+  (dict "name" "settings-service" "port" 3014)
+  (dict "name" "ai-service" "port" 3015)
+-}}
+
+# NOTE: This is a template reference. Actual K8s manifests below use plain YAML.
+# Each service gets a Deployment + Service + HPA.
+
+---
+# ─── API Gateway ───────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: cms
+  labels:
+    app: api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: cms/api-gateway:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3000"
+            - name: AUTH_SERVICE_URL
+              value: http://auth-service.cms.svc.cluster.local:3001
+            - name: USER_SERVICE_URL
+              value: http://user-service.cms.svc.cluster.local:3002
+            - name: TENANT_SERVICE_URL
+              value: http://tenant-service.cms.svc.cluster.local:3003
+            - name: CONTENT_SERVICE_URL
+              value: http://content-service.cms.svc.cluster.local:3004
+            - name: MEDIA_SERVICE_URL
+              value: http://media-service.cms.svc.cluster.local:3005
+            - name: COMMENT_SERVICE_URL
+              value: http://comment-service.cms.svc.cluster.local:3006
+            - name: ANALYTICS_SERVICE_URL
+              value: http://analytics-service.cms.svc.cluster.local:3007
+            - name: NOTIFICATION_SERVICE_URL
+              value: http://notification-service.cms.svc.cluster.local:3008
+            - name: SEARCH_SERVICE_URL
+              value: http://search-service.cms.svc.cluster.local:3009
+            - name: WORKFLOW_SERVICE_URL
+              value: http://workflow-service.cms.svc.cluster.local:3010
+            - name: PLUGIN_SERVICE_URL
+              value: http://plugin-service.cms.svc.cluster.local:3011
+            - name: FEATURE_SERVICE_URL
+              value: http://feature-service.cms.svc.cluster.local:3012
+            - name: AUDIT_SERVICE_URL
+              value: http://audit-service.cms.svc.cluster.local:3013
+            - name: SETTINGS_SERVICE_URL
+              value: http://settings-service.cms.svc.cluster.local:3014
+            - name: AI_SERVICE_URL
+              value: http://ai-service.cms.svc.cluster.local:3015
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: cms
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-gateway
+  namespace: cms
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-gateway
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+# ─── Auth Service ──────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: cms
+  labels:
+    app: auth-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: cms/auth-service:latest
+          ports:
+            - containerPort: 3001
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3001"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: cms
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 3001
+      targetPort: 3001
+---
+# ─── Content Service ──────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content-service
+  namespace: cms
+  labels:
+    app: content-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: content-service
+  template:
+    metadata:
+      labels:
+        app: content-service
+    spec:
+      containers:
+        - name: content-service
+          image: cms/content-service:latest
+          ports:
+            - containerPort: 3004
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3004"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3004
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: content-service
+  namespace: cms
+spec:
+  selector:
+    app: content-service
+  ports:
+    - port: 3004
+      targetPort: 3004
+---
+# ─── Generic template for remaining services ────
+# user-service (3002), tenant-service (3003), media-service (3005),
+# comment-service (3006), analytics-service (3007), notification-service (3008),
+# search-service (3009), workflow-service (3010), plugin-service (3011),
+# feature-service (3012), audit-service (3013), settings-service (3014), ai-service (3015)
+# Each follows the same pattern as auth-service above with their respective ports.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: cms/user-service:latest
+          ports:
+            - containerPort: 3002
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3002"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: cms
+spec:
+  selector:
+    app: user-service
+  ports:
+    - port: 3002
+      targetPort: 3002
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tenant-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tenant-service
+  template:
+    metadata:
+      labels:
+        app: tenant-service
+    spec:
+      containers:
+        - name: tenant-service
+          image: cms/tenant-service:latest
+          ports:
+            - containerPort: 3003
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3003"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3003
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tenant-service
+  namespace: cms
+spec:
+  selector:
+    app: tenant-service
+  ports:
+    - port: 3003
+      targetPort: 3003
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: media-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: media-service
+  template:
+    metadata:
+      labels:
+        app: media-service
+    spec:
+      containers:
+        - name: media-service
+          image: cms/media-service:latest
+          ports:
+            - containerPort: 3005
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3005"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3005
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: '1'
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: media-service
+  namespace: cms
+spec:
+  selector:
+    app: media-service
+  ports:
+    - port: 3005
+      targetPort: 3005
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: comment-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: comment-service
+  template:
+    metadata:
+      labels:
+        app: comment-service
+    spec:
+      containers:
+        - name: comment-service
+          image: cms/comment-service:latest
+          ports:
+            - containerPort: 3006
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3006"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3006
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: comment-service
+  namespace: cms
+spec:
+  selector:
+    app: comment-service
+  ports:
+    - port: 3006
+      targetPort: 3006
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: analytics-service
+  template:
+    metadata:
+      labels:
+        app: analytics-service
+    spec:
+      containers:
+        - name: analytics-service
+          image: cms/analytics-service:latest
+          ports:
+            - containerPort: 3007
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3007"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3007
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service
+  namespace: cms
+spec:
+  selector:
+    app: analytics-service
+  ports:
+    - port: 3007
+      targetPort: 3007
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: cms/notification-service:latest
+          ports:
+            - containerPort: 3008
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3008"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3008
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: cms
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - port: 3008
+      targetPort: 3008
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: search-service
+  template:
+    metadata:
+      labels:
+        app: search-service
+    spec:
+      containers:
+        - name: search-service
+          image: cms/search-service:latest
+          ports:
+            - containerPort: 3009
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3009"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3009
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: search-service
+  namespace: cms
+spec:
+  selector:
+    app: search-service
+  ports:
+    - port: 3009
+      targetPort: 3009
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: workflow-service
+  template:
+    metadata:
+      labels:
+        app: workflow-service
+    spec:
+      containers:
+        - name: workflow-service
+          image: cms/workflow-service:latest
+          ports:
+            - containerPort: 3010
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3010"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3010
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workflow-service
+  namespace: cms
+spec:
+  selector:
+    app: workflow-service
+  ports:
+    - port: 3010
+      targetPort: 3010
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plugin-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: plugin-service
+  template:
+    metadata:
+      labels:
+        app: plugin-service
+    spec:
+      containers:
+        - name: plugin-service
+          image: cms/plugin-service:latest
+          ports:
+            - containerPort: 3011
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3011"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3011
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plugin-service
+  namespace: cms
+spec:
+  selector:
+    app: plugin-service
+  ports:
+    - port: 3011
+      targetPort: 3011
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feature-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: feature-service
+  template:
+    metadata:
+      labels:
+        app: feature-service
+    spec:
+      containers:
+        - name: feature-service
+          image: cms/feature-service:latest
+          ports:
+            - containerPort: 3012
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3012"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3012
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: feature-service
+  namespace: cms
+spec:
+  selector:
+    app: feature-service
+  ports:
+    - port: 3012
+      targetPort: 3012
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: audit-service
+  template:
+    metadata:
+      labels:
+        app: audit-service
+    spec:
+      containers:
+        - name: audit-service
+          image: cms/audit-service:latest
+          ports:
+            - containerPort: 3013
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3013"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3013
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audit-service
+  namespace: cms
+spec:
+  selector:
+    app: audit-service
+  ports:
+    - port: 3013
+      targetPort: 3013
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: settings-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: settings-service
+  template:
+    metadata:
+      labels:
+        app: settings-service
+    spec:
+      containers:
+        - name: settings-service
+          image: cms/settings-service:latest
+          ports:
+            - containerPort: 3014
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3014"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3014
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: settings-service
+  namespace: cms
+spec:
+  selector:
+    app: settings-service
+  ports:
+    - port: 3014
+      targetPort: 3014
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-service
+  namespace: cms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-service
+  template:
+    metadata:
+      labels:
+        app: ai-service
+    spec:
+      containers:
+        - name: ai-service
+          image: cms/ai-service:latest
+          ports:
+            - containerPort: 3015
+          envFrom:
+            - configMapRef:
+                name: cms-config
+            - secretRef:
+                name: cms-secrets
+          env:
+            - name: PORT
+              value: "3015"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3015
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-service
+  namespace: cms
+spec:
+  selector:
+    app: ai-service
+  ports:
+    - port: 3015
+      targetPort: 3015
+---
+# ─── Admin Frontend ───────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin
+  namespace: cms
+  labels:
+    app: admin
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: admin
+  template:
+    metadata:
+      labels:
+        app: admin
+    spec:
+      containers:
+        - name: admin
+          image: cms/admin:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin
+  namespace: cms
+spec:
+  selector:
+    app: admin
+  ports:
+    - port: 80
+      targetPort: 80
